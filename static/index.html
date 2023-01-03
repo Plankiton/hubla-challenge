@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title></title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="style.css" rel="stylesheet">
+</head>
+
+<body>
+  <h2>Hubla Challenge</h2>
+
+  <form id="file-upload-form" class="uploader">
+    <input id="file-upload" type="file" name="fileUpload" accept="plain/text" />
+
+    <label for="file-upload" id="file-drag">
+      <div id="start">
+        <i class="fa fa-download" aria-hidden="true"></i>
+        <div>Select a sales file or drag here</div>
+        <span id="file-upload-btn" class="btn btn-primary">Select a file</span>
+      </div>
+      <div id="response" class="hidden">
+        <div id="messages"></div>
+        <progress class="progress" id="file-progress" value="0">
+          <span>0</span>%
+        </progress>
+      </div>
+    </label>
+  </form>
+  <script src="script.js"></script>
+</body>
+
+</html>
