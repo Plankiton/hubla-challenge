@@ -1,126 +1,183 @@
-function ekUpload() {
-  function Init() {
-    console.log("Upload Initialised");
+const limit = 10;
+let offset = 0, pageCount = 0;
+let salesRes = null;
+let table = document.getElementById("sales");
+th = table.rows[0].outerHTML;
 
-    var fileSelect = document.getElementById('file-upload'),
-      fileDrag = document.getElementById('file-drag');
+function makeTr(sale) {
+  sale.date = new Date(sale.date);
+  return `
+<tr>
+  <td>${sale.type}</td>
+  <td>${sale.date.toLocaleString("pt-BR")}</td>
+  <td>${sale.product}</td>
+  <td>RS$ ${sale.value.toFixed(2).replace(".", ",")}</td>
+  <td>${sale.seller}</td>
+</tr>
+      `;
+}
 
-    fileSelect.addEventListener('change', fileSelectHandler, false);
 
-    // Is XHR2 available?
-    var xhr = new XMLHttpRequest();
-    if (xhr.upload) {
-      // File Drop
-      fileDrag.addEventListener('dragover', fileDragHover, false);
-      fileDrag.addEventListener('dragleave', fileDragHover, false);
-      fileDrag.addEventListener('drop', fileSelectHandler, false);
+function updateSaleList(onResponse) {
+
+  let xhr = new XMLHttpRequest()
+  xhr.open('GET', "/api/sales?limit=" + limit + "&offset=" + offset, true);
+  xhr.onreadystatechange = function(e) {
+    if (xhr.readyState == 4) {
+      // Everything is good!
+      salesRes = JSON.parse(xhr.response);
+      console.log("get sales res: ", salesRes);
+
+      pageCount = salesRes.meta.total / limit;
+      onResponse(salesRes);
     }
+  };
+
+  xhr.send()
+}
+
+function pageButtons(pCount, cur) {
+  var prevDis = (cur == 1) ? "disabled" : "",
+    nextDis = (cur == pCount) ? "disabled" : "",
+    buttons = "<input type='button' value='&lt;&lt; Prev' onclick='updateSaleList(s => sort(s, " + (cur - 1) + "))' " + prevDis + ">";
+  for (i = 1; i <= pCount; i++)
+    buttons += "<input type='button' id='id" + i + "'value='" + i + "' onclick='updateSaleList(s => sort(s, " + i + "))'>";
+  buttons += "<input type='button' value='Next &gt;&gt;' onclick='updateSaleList(s => sort(s, " + (cur + 1) + "))' " + nextDis + ">";
+  return buttons;
+}
+
+function sort(salesRes, page) {
+  offset = (page * limit) - 1
+
+  let rows = th;
+  for (let i = 0; i < salesRes.meta.limit; i++) {
+    rows += makeTr(salesRes.data[i]);
   }
 
-  function fileDragHover(e) {
-    var fileDrag = document.getElementById('file-drag');
+  table.innerHTML = rows;
 
-    e.stopPropagation();
-    e.preventDefault();
+  document.getElementById("buttons").innerHTML = pageButtons(pageCount, page);
+  document.getElementById("id" + page).setAttribute("class", "active");
+}
 
-    fileDrag.className = (e.type === 'dragover' ? 'hover' : 'modal-body file-upload');
-  }
+function fileSelectHandler(e) {
+  // Fetch FileList object
+  let files = e.target.files || e.dataTransfer.files;
 
-  function fileSelectHandler(e) {
-    // Fetch FileList object
-    var files = e.target.files || e.dataTransfer.files;
+  // Cancel event and hover styling
+  fileDragHover(e);
 
-    // Cancel event and hover styling
-    fileDragHover(e);
-
-    // Process all File objects
-    for (var i = 0, f; f = files[i]; i++) {
-      parseFile(f);
-      uploadFile(f);
-    }
-  }
-
-  // Output
-  function output(msg) {
-    // Response
-    var m = document.getElementById('messages');
-    m.innerHTML = msg;
-  }
-
-  function parseFile(file) {
-
-    console.log(file.name);
-    output(
-      '<strong>' + encodeURI(file.name) + '</strong>'
-    );
-
-    var fileType = file.type;
-    console.log("file type:", fileType);
-
-    document.getElementById('start').classList.add("hidden");
-    document.getElementById('response').classList.remove("hidden");
-  }
-
-  function setProgressMaxValue(e) {
-    var pBar = document.getElementById('file-progress');
-
-    if (e.lengthComputable) {
-      pBar.max = e.total;
-    }
-  }
-
-  function updateFileProgress(e) {
-    var pBar = document.getElementById('file-progress');
-
-    if (e.lengthComputable) {
-      pBar.value = e.loaded;
-    }
-  }
-
-  function uploadFile(file) {
-
-    var xhr = new XMLHttpRequest(),
-      fileInput = document.getElementById('class-roster-file'),
-      pBar = document.getElementById('file-progress'),
-      fileSizeLimit = 1024; // In MB
-    if (xhr.upload) {
-      // Check if file is less than x MB
-      if (file.size <= fileSizeLimit * 1024 * 1024) {
-        // Progress bar
-        pBar.style.display = 'inline';
-        xhr.upload.addEventListener('loadstart', setProgressMaxValue, false);
-        xhr.upload.addEventListener('progress', updateFileProgress, false);
-
-        // File received / failed
-        xhr.onreadystatechange = function(e) {
-          console.log(xhr, e);
-          if (xhr.readyState == 4) {
-            // Everything is good!
-
-            console.log(xhr.response)
-            output("File sent");
-            pBar.style.display = "none";
-          }
-        };
-
-        // Start upload
-        xhr.open('POST', "/api/sales", true);
-        xhr.setRequestHeader('X-File-Name', file.name);
-        xhr.setRequestHeader('X-File-Size', file.size);
-        xhr.setRequestHeader('Content-Type', 'multipart/form-data');
-        xhr.send(file);
-      } else {
-        output('Please upload a smaller file (< ' + fileSizeLimit + ' MB).');
-      }
-    }
-  }
-
-  // Check for the various File API support.
-  if (window.File && window.FileList && window.FileReader) {
-    Init();
-  } else {
-    document.getElementById('file-drag').style.display = 'none';
+  // Process all File objects
+  for (let i = 0, f; f = files[i]; i++) {
+    parseFile(f);
+    uploadFile(f);
   }
 }
-ekUpload();
+// Output
+//
+function output(msg) {
+  // Response
+  let m = document.getElementById('messages');
+  m.innerHTML = msg;
+}
 
+function parseFile(file) {
+
+  console.log(file.name);
+  output(
+    '<strong>' + encodeURI(file.name) + '</strong>'
+  );
+
+  let fileType = file.type;
+  console.log("file type:", fileType);
+
+  document.getElementById('start').classList.add("hidden");
+  document.getElementById('response').classList.remove("hidden");
+}
+
+function setProgressMaxValue(e) {
+  let pBar = document.getElementById('file-progress');
+
+  if (e.lengthComputable) {
+    pBar.max = e.total;
+  }
+}
+
+function updateFileProgress(e) {
+  let pBar = document.getElementById('file-progress');
+
+  if (e.lengthComputable) {
+    pBar.value = e.loaded;
+  }
+}
+
+function uploadFile(file) {
+  let xhr = new XMLHttpRequest(),
+    fileInput = document.getElementById('class-roster-file'),
+    pBar = document.getElementById('file-progress'),
+    fileSizeLimit = 1024; // In MB
+
+  xhr.onreadystatechange = function(e) {
+    if (xhr.readyState == 4) {
+      output("File sent");
+      pBar.style.display = "none";
+    }
+  };
+
+  if (xhr.upload) {
+    // Check if file is less than x MB
+    if (file.size <= fileSizeLimit * 1024 * 1024) {
+      pBar.style.display = 'inline';
+      xhr.upload.addEventListener('loadstart', setProgressMaxValue, false);
+      xhr.upload.addEventListener('progress', updateFileProgress, false);
+      xhr.open('POST', "/api/sales?filename=sales", true);
+
+      const formData = new FormData();
+      formData.append("sales", file);
+      xhr.send(formData);
+
+      updateSaleList(s => sort(s, offset / limit))
+    } else {
+      output('Please upload a smaller file (< ' + fileSizeLimit + ' MB).');
+    }
+  }
+}
+
+function fileDragHover(e) {
+  let fileDrag = document.getElementById('file-drag');
+
+  e.stopPropagation();
+  e.preventDefault();
+
+  fileDrag.className = (e.type === 'dragover' ? 'hover' : 'modal-body file-upload');
+}
+
+
+function Init() {
+  let fileSelect = document.getElementById('file-upload'),
+    fileDrag = document.getElementById('file-drag');
+  fileSelect.addEventListener('change', fileSelectHandler, false);
+
+  let xhr = new XMLHttpRequest();
+  if (xhr.upload) {
+    // File Drop
+    fileDrag.addEventListener('dragover', fileDragHover, false);
+    fileDrag.addEventListener('dragleave', fileDragHover, false);
+    fileDrag.addEventListener('drop', fileSelectHandler, false);
+  }
+
+  console.log("Upload Initialized");
+}
+
+if (window.File && window.FileList && window.FileReader) {
+  Init();
+} else {
+  document.getElementById('file-drag').style.display = 'none';
+}
+
+updateSaleList((sales) => {
+  if (pageCount > 1)
+    table.insertAdjacentHTML("afterend", "<div id='buttons'></div");
+
+  sort(sales, 1);
+});
