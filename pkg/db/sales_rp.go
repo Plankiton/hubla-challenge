@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -26,12 +27,63 @@ const sqlInsertSale = `
 	RETURNING id;
 	`
 
-func (storage *SalesRp) Insert(ctx context.Context, sale *Sale) (*Sale, error) {
-	r := storage.PgPool.QueryRow(ctx, sqlInsertSale, sale.Type, sale.Date, sale.Product, sale.Value, sale.Saler)
+const sqlSelectSales = `
+	SELECT id, type, date, product, value, saler FROM sales OFFSET $1 LIMIT $2
+	`
+
+const sqlCountSales = `
+	SELECT count(id) FROM sales
+	`
+
+func (repo *SalesRp) Insert(ctx context.Context, sale *Sale) (*Sale, error) {
+	r := repo.PgPool.QueryRow(ctx, sqlInsertSale, sale.Type, sale.Date, sale.Product, sale.Value, sale.Saler)
 	err := r.Scan(&sale.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	return sale, nil
+}
+
+func (repo *SalesRp) Count(ctx context.Context) (int64, error) {
+	salesCount := int64(0)
+
+	r := repo.PgPool.QueryRow(ctx, sqlCountSales)
+	err := r.Scan(&salesCount)
+	if err != nil {
+		return 0, err
+	}
+
+	return salesCount, nil
+}
+
+func (repo *SalesRp) Sales(ctx context.Context, o, l int) ([]*Sale, error) {
+	rows, err := repo.PgPool.Query(ctx, sqlSelectSales, o, l)
+	if err != nil {
+		return nil, err
+	}
+
+	return repo.ScanSales(ctx, rows)
+}
+
+func (repo *SalesRp) ScanSales(ctx context.Context, row pgx.Rows) ([]*Sale, error) {
+	sales := make([]*Sale, 0)
+
+	for row.Next() {
+		sale, err := repo.ScanSale(ctx, row)
+		if err != nil {
+			return nil, err
+		}
+
+		sales = append(sales, sale)
+	}
+
+	return sales, nil
+}
+
+func (repo *SalesRp) ScanSale(ctx context.Context, row pgx.Row) (*Sale, error) {
+	sale := &Sale{}
+	err := row.Scan(&sale.ID, &sale.Type, &sale.Date, &sale.Product, &sale.Value, &sale.Saler)
+
+	return sale, err
 }
