@@ -20,13 +20,18 @@ type Sale struct {
 	Saler   string    `json:"saler"`
 }
 
-func (storage *SalesRp) Insert(ctx context.Context, sale *Sale) error {
-	// var importedDataID interface{} = nil
+const sqlInsertSale = `
+	INSERT INTO
+		sales(id, type, date, product, value, saler) VALUES (default, $1, $2, $3, $4, $5)
+	RETURNING id;
+	`
 
-	// _, err := storage.pgPool.Exec(ctx, sqlInsertPatient)
-	// if err != nil {
-	// 	return err
-	// }
+func (storage *SalesRp) Insert(ctx context.Context, sale *Sale) (*Sale, error) {
+	r := storage.PgPool.QueryRow(ctx, sqlInsertSale, sale.Type, sale.Date, sale.Product, sale.Value, sale.Saler)
+	err := r.Scan(&sale.ID)
+	if err != nil {
+		return nil, err
+	}
 
-	return nil
+	return sale, nil
 }
