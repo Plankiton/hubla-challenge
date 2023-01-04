@@ -14,11 +14,21 @@ type SalesRp struct {
 
 type Sale struct {
 	ID      int       `json:"id"`
-	Type    int       `json:"type"`
+	Type    int       `json:"-"`
+	TypeStr string    `json:"type"`
 	Date    time.Time `json:"date"`
 	Product string    `json:"product"`
 	Value   float64   `json:"value"`
 	Saler   string    `json:"saler"`
+}
+
+func SaleType(i int) string {
+	return map[int]string{
+		1: "Venda produtor",
+		2: "Venda afiliado",
+		3: "Comissão paga",
+		4: "Comissão recebida",
+	}[i]
 }
 
 const sqlInsertSale = `
@@ -85,5 +95,6 @@ func (repo *SalesRp) ScanSale(ctx context.Context, row pgx.Row) (*Sale, error) {
 	sale := &Sale{}
 	err := row.Scan(&sale.ID, &sale.Type, &sale.Date, &sale.Product, &sale.Value, &sale.Saler)
 
+	sale.TypeStr = SaleType(sale.Type)
 	return sale, err
 }

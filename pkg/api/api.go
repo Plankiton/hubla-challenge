@@ -113,10 +113,3 @@ const (
 const defaultFilename = "sales"
 const defaultLimit = 100
 const defaultOffset = 0
-
-var saleType = map[string]string{
-	"1": "Venda produtor",
-	"2": "Venda afiliado",
-	"3": "Comissão paga",
-	"4": "Comissão recebida",
-}
