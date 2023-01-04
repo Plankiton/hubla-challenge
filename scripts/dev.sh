@@ -29,4 +29,9 @@ until docker run -it --rm --link hubla_db:pg postgres:13.3 psql "postgres://$DB_
     sleep 1;
 done
 
-air -build.cmd "go build -o ./bin/server ./cmd/server" -build.bin "./bin/server"
+if ! air -h > /dev/null 2>&1
+then
+  go build -o ./bin/server/ ./cmd/server && ./bin/server
+else
+  air -build.cmd "go build -o ./bin/server ./cmd/server" -build.bin "./bin/server"
+fi
