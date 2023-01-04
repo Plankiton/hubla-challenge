@@ -11,28 +11,16 @@ type SalesRp struct {
 	PgPool *pgxpool.Pool
 }
 
-type SalesBin struct {
-	Type    byte
-	Date    [25]byte
-	Product [30]byte
-	Value   [10]byte
-	Saler   [20]byte
-}
-
-type SalesModel struct {
+type Sale struct {
 	ID      int       `json:"id"`
-	Type    string    `json:"type"`
+	Type    int       `json:"type"`
 	Date    time.Time `json:"date"`
 	Product string    `json:"product"`
-	Value   string    `json:"value"`
+	Value   float64   `json:"value"`
 	Saler   string    `json:"saler"`
 }
 
-func (storage *SalesRp) ToModel(bin *SalesBin) *SalesModel {
-	return new(SalesModel)
-}
-
-func (storage *SalesRp) Insert(ctx context.Context, sale *SalesModel) error {
+func (storage *SalesRp) Insert(ctx context.Context, sale *Sale) error {
 	// var importedDataID interface{} = nil
 
 	// _, err := storage.pgPool.Exec(ctx, sqlInsertPatient)
