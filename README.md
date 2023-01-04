@@ -2,6 +2,28 @@
 
 O objetivo desse teste é avaliar as suas habilidades em programação.
 
+## Como rodar localmente
+
+Você precisará ter instalado em sua máquina as seguintes dependências:
+
+```
+- Go >= 1.19
+- Docker
+```
+
+Feito isso basta entrar na pasta do projeto e usar o script launcher:
+
+```
+$ cd path/to/hubla-challenge
+$ ./scripts/dev.sh
+```
+
+Depois basta abrir o navegador no endereço [localhost:2345](http://localhost:2345):
+
+[![Hubla Challenge Screenshot](./static/screenshot.png)](http://localhost:2345)
+
+Você pode tanto arrastar o arquivo de transação (sales.txt) quanto selecioná-lo de seu computador.
+
 ## Descrição do projeto
 
 Surgiu uma nova demanda urgente e precisamos de uma área exclusiva para fazer o
