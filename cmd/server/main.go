@@ -49,13 +49,7 @@ func createEchoServer(ctx context.Context, config config.Config) (*http.Server, 
 		return nil, err
 	}
 
-	handler := api.New(repos)
-
-	apiG := e.Group("/api")
-	apiG.POST("/sales", handler.PostSales)
-	apiG.GET("/sales", handler.GetSales)
-	apiG.GET("/sales/meta", handler.GetSalesMeta)
-
+	api.SetupEndpoints(e, repos)
 	return &http.Server{
 		Handler: e,
 		Addr:    ":2345",

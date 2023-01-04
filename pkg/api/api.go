@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/labstack/echo/v4"
 	"github.com/plankiton/hubla-challenge/pkg/db"
 )
 
@@ -24,10 +25,15 @@ func (h Handler) Close() {
 	h.rps.Close()
 }
 
-func New(rps *Repositories) Handler {
-	return Handler{
+func SetupEndpoints(e *echo.Echo, rps *Repositories) {
+	handler := Handler{
 		rps,
 	}
+
+	apiG := e.Group("/api")
+	apiG.POST("/sales", handler.PostSales)
+	apiG.GET("/sales", handler.GetSales)
+	apiG.GET("/sales/meta", handler.GetSalesMeta)
 }
 
 func NewRepositories(pgPool *pgxpool.Pool) *Repositories {

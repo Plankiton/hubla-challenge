@@ -7,7 +7,7 @@ O objetivo desse teste é avaliar as suas habilidades em programação.
 Você precisará ter instalado em sua máquina as seguintes dependências:
 
 ```
-- Go >= 1.19
+- Golang
 - Docker
 ```
 
