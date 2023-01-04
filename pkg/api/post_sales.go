@@ -1,6 +1,8 @@
 package api
 
 import (
+	"fmt"
+	"log"
 	"math"
 	"mime/multipart"
 	"strconv"
@@ -11,7 +13,7 @@ import (
 	"github.com/plankiton/hubla-challenge/pkg/db"
 )
 
-const filename = "sales.txt"
+const defaultFilename = "sales"
 
 var saleType = map[string]string{
 	"1": "Venda produtor",
@@ -23,24 +25,32 @@ var saleType = map[string]string{
 func (h *Handler) PostSales(c echo.Context) error {
 	ctx := c.Request().Context()
 
+	filename := defaultFilename
+	if v := c.QueryParam("filename"); v != "" {
+		filename = v
+	}
+
 	f, err := c.FormFile(filename)
 	if err != nil {
 		return c.JSON(400, echo.Map{
-			"err": err.Error(),
+			"ok":  false,
+			"err": fmt.Sprintf("form field of multipart needs to be \"%s\"", filename),
 		})
 	}
 
 	file, err := f.Open()
 	if err != nil {
 		return c.JSON(400, echo.Map{
-			"err": err.Error(),
+			"ok":  false,
+			"err": fmt.Sprintf("file sent was invalid"),
 		})
 	}
 
 	content, err := openFile(file, int(f.Size))
 	if err != nil {
 		return c.JSON(500, echo.Map{
-			"err": err.Error(),
+			"ok":  false,
+			"err": "can't read file content",
 		})
 	}
 
@@ -48,18 +58,21 @@ func (h *Handler) PostSales(c echo.Context) error {
 	for _, line := range content {
 		sale := toSale(line)
 		if sale != nil {
+			_, err := h.rps.salesRp.Insert(ctx, sale)
+			if err != nil {
+				log.Printf(err.Error())
+			}
+
 			sales = append(sales, sale)
 		}
-
-		h.rps.salesRp.Insert(ctx, sale)
 	}
 
 	return c.JSON(200, echo.Map{
+		"ok":   true,
 		"data": sales,
 	})
 }
 
-// Function to translate string based data to Sale struct
 func toSale(content []byte) *db.Sale {
 	curr := 0
 
