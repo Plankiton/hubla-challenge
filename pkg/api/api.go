@@ -64,6 +64,9 @@ func toSale(content []byte) *db.Sale {
 	dateParsed, _ := time.Parse(time.RFC3339, string(date))
 
 	typParsed, _ := strconv.Atoi(string(typ))
+	if typParsed == 3 && valueParsed > 0 {
+		valueParsed *= -1
+	}
 
 	sale := &db.Sale{
 		Type:    typParsed,

@@ -2,13 +2,14 @@ package api
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/log"
 	"github.com/plankiton/hubla-challenge/pkg/db"
 )
 
 func (h *Handler) PostSales(c echo.Context) error {
+	logger := c.Logger()
 	ctx := c.Request().Context()
 
 	filename := defaultFilename
@@ -18,6 +19,11 @@ func (h *Handler) PostSales(c echo.Context) error {
 
 	f, err := c.FormFile(filename)
 	if err != nil {
+		logger.Errorj(log.JSON{
+			"message": "wrong form field",
+			"err":     err.Error(),
+		})
+
 		return c.JSON(400, echo.Map{
 			"ok":  false,
 			"err": fmt.Sprintf("form field of multipart needs to be \"%s\"", filename),
@@ -26,6 +32,11 @@ func (h *Handler) PostSales(c echo.Context) error {
 
 	file, err := f.Open()
 	if err != nil {
+		logger.Errorj(log.JSON{
+			"message": "file sent was invalid",
+			"err":     err.Error(),
+		})
+
 		return c.JSON(400, echo.Map{
 			"ok":  false,
 			"err": fmt.Sprintf("file sent was invalid"),
@@ -34,6 +45,11 @@ func (h *Handler) PostSales(c echo.Context) error {
 
 	content, err := openFile(file, int(f.Size))
 	if err != nil {
+		logger.Errorj(log.JSON{
+			"message": "can't read file content",
+			"err":     err.Error(),
+		})
+
 		return c.JSON(500, echo.Map{
 			"ok":  false,
 			"err": "can't read file content",
@@ -44,9 +60,14 @@ func (h *Handler) PostSales(c echo.Context) error {
 	for _, line := range content {
 		sale := toSale(line)
 		if sale != nil {
-			_, err := h.rps.salesRp.Insert(ctx, sale)
+			s, err := h.rps.salesRp.Insert(ctx, sale)
 			if err != nil {
-				log.Printf(err.Error())
+				logger.Errorj(log.JSON{
+					"message": "can't insert sale",
+					"err":     err.Error(),
+				})
+			} else {
+				sale = s
 			}
 
 			sales = append(sales, sale)

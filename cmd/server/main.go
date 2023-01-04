@@ -54,6 +54,7 @@ func createEchoServer(ctx context.Context, config config.Config) (*http.Server, 
 	apiG := e.Group("/api")
 	apiG.POST("/sales", handler.PostSales)
 	apiG.GET("/sales", handler.GetSales)
+	apiG.GET("/sales/meta", handler.GetSalesMeta)
 
 	return &http.Server{
 		Handler: e,

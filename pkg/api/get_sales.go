@@ -4,9 +4,11 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/log"
 )
 
 func (h *Handler) GetSales(c echo.Context) error {
+	logger := c.Logger()
 	ctx := c.Request().Context()
 
 	limit := defaultLimit
@@ -21,6 +23,11 @@ func (h *Handler) GetSales(c echo.Context) error {
 
 	sales, err := h.rps.salesRp.Sales(ctx, offset, limit)
 	if err != nil {
+		logger.Errorj(log.JSON{
+			"message": "error searching for sales",
+			"err":     err.Error(),
+		})
+
 		return c.JSON(500, echo.Map{
 			"ok":  false,
 			"err": "error searching for sales",
@@ -29,6 +36,11 @@ func (h *Handler) GetSales(c echo.Context) error {
 
 	salesCount, err := h.rps.salesRp.Count(ctx)
 	if err != nil {
+		logger.Errorj(log.JSON{
+			"message": "error counting sales",
+			"err":     err.Error(),
+		})
+
 		return c.JSON(500, echo.Map{
 			"ok":  false,
 			"err": "error counting sales",

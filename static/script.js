@@ -1,7 +1,10 @@
+let table = document.getElementById("sales"),
+  countSpan = document.getElementById("count"),
+  sumSpan = document.getElementById("sum");
+
 const limit = 10;
-let offset = 0, pageCount = 0;
+let offset = 0, pageCount = 0, currPage = 0;
 let salesRes = null;
-let table = document.getElementById("sales");
 th = table.rows[0].outerHTML;
 
 function makeTr(sale) {
@@ -17,10 +20,25 @@ function makeTr(sale) {
       `;
 }
 
+function updateSaleMeta() {
+  let xhr = new XMLHttpRequest();
+  xhr.open('GET', "/api/sales/meta");
+  xhr.onreadystatechange = function(e) {
+    if (xhr.readyState == 4) {
+      // Everything is good!
+      r = JSON.parse(xhr.response);
+
+      countSpan.innerHTML = r.meta.count;
+      sumSpan.innerHTML = `R$ ${r.meta.total.toFixed(2)}`;
+
+      console.log(r);
+    }
+  };
+  xhr.send();
+}
 
 function updateSaleList(onResponse) {
-
-  let xhr = new XMLHttpRequest()
+  let xhr = new XMLHttpRequest();
   xhr.open('GET', "/api/sales?limit=" + limit + "&offset=" + offset, true);
   xhr.onreadystatechange = function(e) {
     if (xhr.readyState == 4) {
@@ -33,7 +51,8 @@ function updateSaleList(onResponse) {
     }
   };
 
-  xhr.send()
+  xhr.send();
+  updateSaleMeta();
 }
 
 function pageButtons(pCount, cur) {
@@ -58,6 +77,8 @@ function sort(salesRes, page) {
 
   document.getElementById("buttons").innerHTML = pageButtons(pageCount, page);
   document.getElementById("id" + page).setAttribute("class", "active");
+
+  currPage = page;
 }
 
 function fileSelectHandler(e) {
@@ -119,8 +140,10 @@ function uploadFile(file) {
 
   xhr.onreadystatechange = function(e) {
     if (xhr.readyState == 4) {
-      output("File sent");
+      output("File already sent! Please refresh the page to send new transactions");
       pBar.style.display = "none";
+
+      updateSaleList(s => sort(s, currPage))
     }
   };
 
@@ -135,8 +158,6 @@ function uploadFile(file) {
       const formData = new FormData();
       formData.append("sales", file);
       xhr.send(formData);
-
-      updateSaleList(s => sort(s, offset / limit))
     } else {
       output('Please upload a smaller file (< ' + fileSizeLimit + ' MB).');
     }
