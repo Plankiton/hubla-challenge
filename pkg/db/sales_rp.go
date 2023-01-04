@@ -19,7 +19,7 @@ type Sale struct {
 	Date    time.Time `json:"date"`
 	Product string    `json:"product"`
 	Value   float64   `json:"value"`
-	Saler   string    `json:"saler"`
+	Seller  string    `json:"seller"`
 }
 
 func SaleType(i int) string {
@@ -33,12 +33,12 @@ func SaleType(i int) string {
 
 const sqlInsertSale = `
 	INSERT INTO
-		sales(id, type, date, product, value, saler) VALUES (default, $1, $2, $3, $4, $5)
+		sales(id, type, date, product, value, seller) VALUES (default, $1, $2, $3, $4, $5)
 	RETURNING id;
 	`
 
 const sqlSelectSales = `
-	SELECT id, type, date, product, value, saler FROM sales OFFSET $1 LIMIT $2
+	SELECT id, type, date, product, value, seller FROM sales OFFSET $1 LIMIT $2
 	`
 
 const sqlCountSales = `
@@ -46,7 +46,7 @@ const sqlCountSales = `
 	`
 
 func (repo *SalesRp) Insert(ctx context.Context, sale *Sale) (*Sale, error) {
-	r := repo.PgPool.QueryRow(ctx, sqlInsertSale, sale.Type, sale.Date, sale.Product, sale.Value, sale.Saler)
+	r := repo.PgPool.QueryRow(ctx, sqlInsertSale, sale.Type, sale.Date, sale.Product, sale.Value, sale.Seller)
 	err := r.Scan(&sale.ID)
 	if err != nil {
 		return nil, err
@@ -93,7 +93,7 @@ func (repo *SalesRp) ScanSales(ctx context.Context, row pgx.Rows) ([]*Sale, erro
 
 func (repo *SalesRp) ScanSale(ctx context.Context, row pgx.Row) (*Sale, error) {
 	sale := &Sale{}
-	err := row.Scan(&sale.ID, &sale.Type, &sale.Date, &sale.Product, &sale.Value, &sale.Saler)
+	err := row.Scan(&sale.ID, &sale.Type, &sale.Date, &sale.Product, &sale.Value, &sale.Seller)
 
 	sale.TypeStr = SaleType(sale.Type)
 	return sale, err

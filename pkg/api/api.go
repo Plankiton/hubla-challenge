@@ -56,7 +56,7 @@ func toSale(content []byte) *db.Sale {
 	value := content[curr : curr+valueSize]
 	curr += valueSize
 
-	saler := string(content[curr:])
+	seller := string(content[curr:])
 
 	valueInt, _ := strconv.Atoi(string(value))
 	valueParsed := moveFloat(valueInt, -2)
@@ -70,7 +70,7 @@ func toSale(content []byte) *db.Sale {
 		Date:    dateParsed,
 		Value:   valueParsed,
 		Product: strings.TrimSpace(prod),
-		Saler:   strings.TrimSpace(saler),
+		Seller:  strings.TrimSpace(seller),
 	}
 
 	return sale
@@ -102,12 +102,12 @@ func moveFloat(value int, points int) float64 {
 }
 
 const (
-	saleSize  = 86
-	salerSize = 10
-	valueSize = 10
-	prodSize  = 30
-	dateSize  = 25
-	typSize   = 1
+	saleSize   = 86
+	sellerSize = 10
+	valueSize  = 10
+	prodSize   = 30
+	dateSize   = 25
+	typSize    = 1
 )
 
 const defaultFilename = "sales"

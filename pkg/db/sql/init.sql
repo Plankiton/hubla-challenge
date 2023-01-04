@@ -5,6 +5,6 @@ BEGIN;
     date timestamp without time zone,
     product text,
     value real,
-    saler text
+    seller text
   );
 COMMIT;
